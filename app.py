@@ -12,7 +12,7 @@ import platform
 # Initialize Flask app
 app = Flask(__name__, static_folder="static")
 CORS(app)  # Enable CORS for API routes
-app.secret_key = os.environ.get("SECRET_KEY")
+app.secret_key = os.environ.get("SECRET_KEY", "default_secret_key_for_local_dev")
 if not app.secret_key:
     raise RuntimeError("SECRET_KEY environment variable is not set.")
 # Configuration
@@ -26,6 +26,13 @@ TOPIC = "smartnest/led"
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
+
+# Example: Hashing a password during user creation
+def hash_password(plain_password):
+    return generate_password_hash(plain_password, method='sha256')
+
+# Example usage:
+hashed_password = hash_password("user_password")  # Store this in the database
 
 # Platform-based mocking
 if platform.system() == "Windows" or os.environ.get("VERCEL"):
@@ -48,9 +55,15 @@ if platform.system() == "Windows" or os.environ.get("VERCEL"):
             self._humidity = max(0, min(100, self._humidity))  # Keep humidity between 0% and 100%
             return round(self._humidity, 1)
 
+        def __repr__(self):
+            return f"<MockDHT temperature={self.temperature}, humidity={self.humidity}>"
+
+
     adafruit_dht = MockDHT
     board = None
 
+# Platform-based mocking
+if platform.system() == "Windows" or os.environ.get("VERCEL"):
     # Mock LED
     class MockLED:
         def __init__(self, pin):
@@ -64,16 +77,37 @@ if platform.system() == "Windows" or os.environ.get("VERCEL"):
             self.state = "OFF"
             print("Mock LED OFF")
 
-    LED = MockLED
-
+    led = MockLED(17)  # Use a mock pin number
 else:
-    import adafruit_dht
-    import board
     from gpiozero import LED
-
-    dht_device = adafruit_dht.DHT22(board.D4)  # GPIO pin 4 on Raspberry Pi
     led = LED(17)  # GPIO pin 17 for LED
 
+
+if os.environ.get("VERCEL"):
+    class MockMQTTClient:
+        def connect(self, *args, **kwargs):
+            print("Mock MQTT connection established.")
+
+        def publish(self, topic, payload):
+            print(f"Mock MQTT published to {topic}: {payload}")
+
+        def subscribe(self, topic):
+            print(f"Mock MQTT subscribed to {topic}")
+
+        def loop_start(self):
+            print("Mock MQTT loop started.")
+
+    mqtt_client = MockMQTTClient()
+else:
+    import paho.mqtt.client as mqtt
+    mqtt_client = mqtt.Client()
+    mqtt_client.connect("localhost", 1883, 60)
+    mqtt_client.loop_start()
+ 
+    
+# Example: Validating user password during login
+def validate_password(stored_password, provided_password):
+    return check_password_hash(stored_password, provided_password)
     
 def calculate_stats():
     total_daily = 0
@@ -182,14 +216,26 @@ def login():
         password = request.form.get("password")
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
+        
+        # Fetch user from database
         cursor.execute("SELECT id, username, password FROM users WHERE username = ?", (username,))
         user = cursor.fetchone()
         conn.close()
-        if user and check_password_hash(user[2], password):
-            login_user(User(id=user[0], username=user[1]))
-            return redirect(url_for("dashboard"))
-        flash("Invalid username or password.")
+
+        # Check if user exists
+        if user:
+            # Validate password
+            if validate_password(user[2], password):  # Assuming validate_password is a defined function
+                login_user(User(id=user[0], username=user[1]))
+                return redirect(url_for("dashboard"))
+            else:
+                flash("Invalid password.")
+        else:
+            flash("User does not exist.")
+
     return render_template("login.html")
+
+
 
 @app.route('/logout')
 @login_required
@@ -206,25 +252,39 @@ def dashboard():
 @login_required
 def get_sensor_data():
     try:
-        temperature = dht_device.temperature if platform.system() != "Windows" else adafruit_dht.temperature
-        humidity = dht_device.humidity if platform.system() != "Windows" else adafruit_dht.humidity
+        # Fetch sensor data depending on the platform
+        if platform.system() == "Windows" or os.environ.get("VERCEL"):
+            temperature = adafruit_dht().temperature  # Get the property value
+            humidity = adafruit_dht().humidity        # Get the property value
+        else:
+            temperature = dht_device.temperature
+            humidity = dht_device.humidity
+
+        # Return the data as a JSON response
         return jsonify({"temperature": temperature, "humidity": humidity})
     except Exception as e:
         print(f"Sensor error: {e}")
         return jsonify({"error": "Unable to read sensor data"}), 500
 
+
 @app.route('/api/led/<state>')
 @login_required
 def control_led(state):
-    if state.lower() == "on":
-        led.on()
-        mqtt_client.publish(TOPIC, "ON")
-        return jsonify({"status": "LED turned ON"})
-    elif state.lower() == "off":
-        led.off()
-        mqtt_client.publish(TOPIC, "OFF")
-        return jsonify({"status": "LED turned OFF"})
-    return jsonify({"error": "Invalid LED state"}), 400
+    try:
+        if state.lower() == "on":
+            led.on()
+            mqtt_client.publish(TOPIC, "ON")
+            return jsonify({"status": "LED turned ON"})
+        elif state.lower() == "off":
+            led.off()
+            mqtt_client.publish(TOPIC, "OFF")
+            return jsonify({"status": "LED turned OFF"})
+        else:
+            return jsonify({"error": "Invalid LED state"}), 400
+    except Exception as e:
+        print(f"Error controlling LED: {e}")
+        return jsonify({"error": "Failed to control LED"}), 500
+
 
 @app.route('/stats')
 @login_required

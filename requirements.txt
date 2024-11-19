@@ -1,5 +1,5 @@
 Flask==2.2.5
 Werkzeug==2.2.3
-Flask-Cors==3.0.10
 Flask-Login==0.6.2
+Flask-Cors==3.0.10
 paho-mqtt==1.6.1
