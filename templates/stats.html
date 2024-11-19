@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Energy Usage Stats{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mb-4">Energy Usage Statistics</h2>
+    <div class="card mx-auto" style="max-width: 500px;">
+        <div class="card-body">
+            <h5 class="card-title">Daily Usage</h5>
+            <p class="card-text">{{ stats.daily_usage }}</p>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Weekly Usage</h5>
+            <p class="card-text">{{ stats.weekly_usage }}</p>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Monthly Usage</h5>
+            <p class="card-text">{{ stats.monthly_usage }}</p>
+        </div>
+    </div>
+    <div class="text-center mt-4">
+        <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Energy Usage Plots{% endblock %}
+
+{% block content %}
+<h2 class="text-center">Energy Usage Over Time</h2>
+<div id="plot" class="my-4"></div>
+<script>
+    // Extract data from the Flask backend
+    const plotData = {{ plot_data|tojson }};
+    
+    // Prepare data for the chart
+    const dates = plotData.map(item => item.date);
+    const usage = plotData.map(item => item.usage);
+
+    const data = [{
+        x: dates,
+        y: usage,
+        type: 'scatter',
+        mode: 'lines+markers',
+        marker: { color: 'blue' }
+    }];
+
+    // Plot the chart
+    Plotly.newPlot('plot', data, {
+        title: 'Energy Usage (Daily Totals)',
+        xaxis: { title: 'Date' },
+        yaxis: { title: 'Energy Usage (kWh)' }
+    });
+</script>
+
+{% endblock %}
