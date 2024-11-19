@@ -12,8 +12,9 @@ import platform
 # Initialize Flask app
 app = Flask(__name__, static_folder="static")
 CORS(app)  # Enable CORS for API routes
-app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")  # Use env variable for security
-
+app.secret_key = os.environ.get("SECRET_KEY")
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY environment variable is not set.")
 # Configuration
 DB_FILE = os.environ.get("DB_FILE", "smartnest.db")
 DATA_DIR = os.environ.get("DATA_DIR", "data")
