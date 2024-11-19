@@ -28,28 +28,32 @@ login_manager.init_app(app)
 login_manager.login_view = "login"
 
 # Platform-based mocking
-if platform.system() == "Windows":
+if platform.system() == "Windows" or os.environ.get("VERCEL"):
+    # Mock DHT Sensor
     class MockDHT:
-        def __init__(self):
-            self._temperature = 25.0
-            self._humidity = 50.0
+        def __init__(self, *args, **kwargs):
+            self._temperature = 25.0  # Default mock temperature
+            self._humidity = 50.0     # Default mock humidity
 
         @property
         def temperature(self):
+            # Simulate slight temperature fluctuations
             self._temperature += random.uniform(-0.5, 0.5)
             return round(self._temperature, 1)
 
         @property
         def humidity(self):
+            # Simulate slight humidity fluctuations
             self._humidity += random.uniform(-1, 1)
-            self._humidity = max(0, min(100, self._humidity))
+            self._humidity = max(0, min(100, self._humidity))  # Keep humidity between 0% and 100%
             return round(self._humidity, 1)
 
-    adafruit_dht = MockDHT()
+    adafruit_dht = MockDHT
     board = None
 
+    # Mock LED
     class MockLED:
-        def __init__(self):
+        def __init__(self, pin):
             self.state = "OFF"
 
         def on(self):
@@ -61,13 +65,15 @@ if platform.system() == "Windows":
             print("Mock LED OFF")
 
     LED = MockLED
-    led = LED()
+
 else:
     import adafruit_dht
     import board
     from gpiozero import LED
-    dht_device = adafruit_dht.DHT22(board.D4)
-    led = LED(17)
+
+    dht_device = adafruit_dht.DHT22(board.D4)  # GPIO pin 4 on Raspberry Pi
+    led = LED(17)  # GPIO pin 17 for LED
+
     
 def calculate_stats():
     total_daily = 0
