@@ -55,12 +55,33 @@ if platform.system() == "Windows" or os.environ.get("VERCEL"):
             self._humidity = max(0, min(100, self._humidity))  # Keep humidity between 0% and 100%
             return round(self._humidity, 1)
 
-        def __repr__(self):
-            return f"<MockDHT temperature={self.temperature}, humidity={self.humidity}>"
+    # Assign mock sensor
+    dht_sensor = MockDHT()
+else:
+    # Real DHT Sensor for Raspberry Pi
+    import Adafruit_DHT
 
+    class RealDHT:
+        def __init__(self, sensor_type, pin):
+            self.sensor_type = sensor_type
+            self.pin = pin
 
-    adafruit_dht = MockDHT
-    board = None
+        @property
+        def temperature(self):
+            _, temp = Adafruit_DHT.read_retry(self.sensor_type, self.pin)
+            if temp is None:
+                raise ValueError("Failed to read temperature from sensor")
+            return round(temp, 1)
+
+        @property
+        def humidity(self):
+            hum, _ = Adafruit_DHT.read_retry(self.sensor_type, self.pin)
+            if hum is None:
+                raise ValueError("Failed to read humidity from sensor")
+            return round(hum, 1)
+
+    # Assign real sensor
+    dht_sensor = RealDHT(Adafruit_DHT.DHT22, 4)  # Example GPIO pin
 
 # Platform-based mocking
 if platform.system() == "Windows" or os.environ.get("VERCEL"):
@@ -250,21 +271,16 @@ def dashboard():
 
 @app.route('/api/sensor')
 @login_required
-def get_sensor_data():
+def get_sensor_data_api():
     try:
-        # Fetch sensor data depending on the platform
-        if platform.system() == "Windows" or os.environ.get("VERCEL"):
-            temperature = adafruit_dht().temperature  # Get the property value
-            humidity = adafruit_dht().humidity        # Get the property value
-        else:
-            temperature = dht_device.temperature
-            humidity = dht_device.humidity
-
-        # Return the data as a JSON response
+        # Use the appropriate sensor (mock or real)
+        temperature = dht_sensor.temperature
+        humidity = dht_sensor.humidity
         return jsonify({"temperature": temperature, "humidity": humidity})
     except Exception as e:
         print(f"Sensor error: {e}")
         return jsonify({"error": "Unable to read sensor data"}), 500
+
 
 
 @app.route('/api/led/<state>')
