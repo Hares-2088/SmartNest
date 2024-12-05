@@ -1,38 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Usage Plots{% endblock %}
+{% block title %}Plots - SmartNest{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h2 class="text-center my-4">Energy Usage Over Time</h2>
-    <div id="usage-plot" style="height: 500px;"></div>
+<div class="container mt-5">
+    <h2 class="mb-4">Data Visualizations</h2>
+    <div id="plot">
+        <p>Loading chart...</p>
+    </div>
 </div>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-    // Extract plot data passed from Flask
     const plotData = {{ plot_data | tojson }};
-
-    // Prepare data for Plotly
-    const dates = plotData.map(item => item.date);
-    const usages = plotData.map(item => item.usage);
+    const dates = plotData.map(data => data.date);
+    const usages = plotData.map(data => data.usage);
 
     const trace = {
         x: dates,
         y: usages,
         type: 'scatter',
         mode: 'lines+markers',
-        marker: { color: 'blue' },
-        name: 'Energy Usage'
+        marker: { size: 6 },
+        line: { width: 2 }
     };
 
     const layout = {
-        title: 'Daily Energy Usage',
+        title: 'Daily Usage Over Time',
         xaxis: { title: 'Date' },
-        yaxis: { title: 'Usage (kWh)' },
-        margin: { t: 40, r: 20, l: 50, b: 50 }
+        yaxis: { title: 'Usage (kWh)' }
     };
 
-    Plotly.newPlot('usage-plot', [trace], layout);
+    Plotly.newPlot('plot', [trace], layout);
 </script>
 {% endblock %}

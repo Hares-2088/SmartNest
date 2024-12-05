@@ -26,7 +26,6 @@
 </div>
 
 <script>
-    // Fetch and control the LED state
     async function controlLED(state) {
         try {
             const response = await fetch(`/api/led/${state}`);
@@ -38,7 +37,6 @@
         }
     }
 
-    // Fetch and display sensor data
     async function fetchSensorData() {
         try {
             const response = await fetch('/api/sensor');
@@ -57,7 +55,6 @@
         }
     }
 
-    // Refresh sensor data every 5 seconds
     setInterval(fetchSensorData, 5000);
     fetchSensorData();
 </script>

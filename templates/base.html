@@ -31,6 +31,12 @@
             text-align: center;
             padding: 1em;
         }
+
+        /* Active button styling */
+        .btn.active {
+            background-color: #0056b3 !important;
+            color: #fff !important;
+        }
     </style>
     <!-- Include Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -41,10 +47,10 @@
         <div class="container">
             <h1 class="text-center">SmartNest</h1>
             <nav class="text-center">
-                <a href="/dashboard" class="btn btn-primary mx-2">Dashboard</a>
-                <a href="/stats" class="btn btn-secondary mx-2">Stats</a>
-                <a href="/plots" class="btn btn-info mx-2">Plots</a>
-                <a href="/logout" class="btn btn-danger mx-2">Logout</a>
+                <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-primary mx-2 {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
+                <a href="{{ url_for('dashboard.stats') }}" class="btn btn-secondary mx-2 {% if request.path == '/stats' %}active{% endif %}">Stats</a>
+                <a href="{{ url_for('dashboard.plots') }}" class="btn btn-info mx-2 {% if request.path == '/plots' %}active{% endif %}">Plots</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger mx-2">Logout</a>
             </nav>
         </div>
     </header>

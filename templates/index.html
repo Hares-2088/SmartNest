@@ -1,19 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartNest</title>
-</head>
-<body>
-    <header>
-        <h1>Welcome to SmartNest</h1>
-    </header>
-    <nav>
-        <a href="/api/objects">View Objects</a>
+{% extends "base.html" %}
+
+{% block title %}Welcome - SmartNest{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Welcome to SmartNest</h2>
+    <nav class="text-center">
+        <a href="/api/objects" class="btn btn-primary">View Objects</a>
     </nav>
-    <footer>
-        <p>&copy; 2024 SmartNest</p>
-    </footer>
-</body>
-</html>
+</div>
+{% endblock %}
