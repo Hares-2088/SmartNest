@@ -1,3 +1,7 @@
+#Thsi script is used to run the Flask app on the Raspberry Pi.
+# It configures logging and checks if the MQTT server is reachable before starting the app.
+# If the MQTT server is not reachable, the script will exit with an error message.
+# The Flask app is then run on the Raspberry Pi.
 import os
 import logging
 from app import create_app

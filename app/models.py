@@ -56,3 +56,14 @@ def fetch_all_sensor_data():
     
     conn.close()
     return rows
+
+def load_user(user_id):
+    """Load a user by ID."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    
+    conn.close()
+    return user

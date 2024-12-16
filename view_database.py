@@ -1,3 +1,4 @@
+# This script is used to view the existing users in the database and add a default user if none exist.
 import sqlite3
 from werkzeug.security import generate_password_hash
 

@@ -1,3 +1,4 @@
+#this file is to test my connection to the DHT11 sensor and to see if I can get the temperature and humidity readings from it.
 import adafruit_dht
 import board
 import time

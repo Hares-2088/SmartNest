@@ -2,8 +2,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import json
 from datetime import datetime, timedelta
+from gpiozero import MotionSensor
+import RPi.GPIO as GPIO
+import time
 
 DATA_DIR = os.environ.get("DATA_DIR", "data")
+
+MOTION_SENSOR_PIN = 4  # Define the GPIO pin for the motion sensor
+LED_PIN = 17  # Define the GPIO pin for the LED
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LED_PIN, GPIO.OUT)
 
 def hash_password(plain_password):
     return generate_password_hash(plain_password, method="sha256")
@@ -41,5 +50,23 @@ def calculate_stats():
         "weekly_usage": f"{total_weekly} kWh",
         "monthly_usage": f"{total_monthly} kWh",
     }
+
+def motion_loop():
+    pir = MotionSensor(MOTION_SENSOR_PIN)
+    try:
+        while True:
+            if pir.wait_for_active():
+                print('Motion detected')
+                GPIO.output(LED_PIN, GPIO.HIGH)
+                time.sleep(0.5)
+                GPIO.output(LED_PIN, GPIO.LOW)
+                time.sleep(0.5)
+            time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("Motion loop interrupted by user")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        GPIO.cleanup()
 
 
