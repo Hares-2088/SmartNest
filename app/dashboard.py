@@ -8,6 +8,8 @@ from app.utils import calculate_stats
 dashboard_bp = Blueprint("dashboard", __name__)
 
 DATA_DIR = os.environ.get("DATA_DIR", "data")
+if not os.path.exists(DATA_DIR):
+    raise FileNotFoundError(f"Data directory {DATA_DIR} does not exist")
 
 @dashboard_bp.route("/dashboard")
 @login_required
@@ -47,6 +49,8 @@ def plots():
                     data = json.load(f)
                     daily_usage = sum(item["usage"] for item in data)
                     plot_data.append({"date": file_date, "usage": daily_usage})
+            except json.JSONDecodeError as e:
+                print(f"Error decoding JSON from file {filename}: {e}")
             except Exception as e:
                 print(f"Error reading file {filename}: {e}")
 
